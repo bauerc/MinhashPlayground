@@ -61,6 +61,8 @@ object Minhash extends{
 
     val minhashBox = div().render
 
+    val bandBox = div().render
+
     //Functions to change the page
     def getTokenizer(): String => Set[String] = {
       tokenizer.value match {
@@ -100,38 +102,29 @@ object Minhash extends{
       ).render
     }
 
-
-    def renderMinhashes(s1: String, s2: String): html.Div = {
+    def generateMinhashes(s1: String, s2:String): List[(Long, Long, Boolean)] = {
       val lim = mhNum.value.toInt
-      val minhashes = for {
+      for {
         s <- seeds.take(lim)
       } yield {
         val m1 =minhash(s1, s)
         val m2 =minhash(s2, s)
         (m1, m2, m1 == m2)
       }
+    }
+
+    def renderMinhashes(s1: String, s2: String): html.Div = {
+      val lim = mhNum.value.toInt
+      val minhashes = generateMinhashes(s1,s2)
       val numTrue = minhashes.count(_._3)
       div(`class` := "container",
         fontSize := "12px",
         if (numTrue > 0) h6("Its a 'match'!") else h6("Its not a 'match'!"),
         p("There were " + numTrue + " matching minhashes out of " + lim),
         dl(`class` := "row",
-          dt(`class` := "col-sm-4", p("Minhash Jaccard Similarity: ")),
+          dt(`class` := "col-sm-4", p("Minhash Collision Rate: ")),
           dd(`class` := "col-sm-8", (numTrue * 1.0)/lim)
         ),
-        //        a(
-        //          cls := "btn btn-secondary",
-        //          `type` := "button",
-        //          href := "#collapseExample",
-        //          attr("data-toggle") := "collapse",
-        //          attr("aria-expanded") := "false",
-        //          attr("aria-controls") := "collapseExample",
-        //          "Open Minhashes"),
-        //        div(
-        //          cls := "collapse",
-        //          id := "collapseExample",
-        //          div(
-        //            cls := "container",
         for {
           m <- minhashes
         } yield {
@@ -148,8 +141,6 @@ object Minhash extends{
           }
 
         }
-        //      )
-        //        )
       ).render
     }
 
@@ -160,6 +151,42 @@ object Minhash extends{
       val divisors = l.toList.flatten.distinct.sorted
 
       divisors.map(d => option(value := d.toString, d.toString).render)
+    }
+
+    def renderBands(): html.Div = {
+      val b = bandNum.value.toInt
+      val h = mhNum.value.toInt
+      val minhashes = generateMinhashes(box1.value, box2.value)
+      val minA = minhashes.map(_._1)
+      val minB = minhashes.map(_._2)
+      val bandsA = minA.grouped(h/b).map(x => MurmurHash3.seqHash(x))
+      val bandsB = minB.grouped(h/b).map(x => MurmurHash3.seqHash(x))
+      val bands = bandsA.zip(bandsB).toList
+      val numTrue = bands.count(x => x._1 == x._2)
+      div(`class` := "container",
+        fontSize := "12px",
+        if (numTrue > 0) h6("Its a 'match'!") else h6("Its not a 'match'!"),
+        p("There were " + numTrue + " matching bands out of " + b),
+        dl(`class` := "row",
+          dt(`class` := "col-sm-4", p("Band Collision Rate: ")),
+          dd(`class` := "col-sm-8", (numTrue * 1.0)/b)
+        ),
+        for {
+          x <- bands
+        } yield {
+          if (x._1 == x._2) {
+            div(`class` := "row",
+              div(`class` := "col-sm bg-success text-white", x._1),
+              div(`class` := "col-sm bg-success text-white", x._2)
+            )
+          } else {
+            div(`class` := "row",
+              div(`class` := "col-sm", x._1),
+              div(`class` := "col-sm", x._2)
+            )
+          }
+        }
+      ).render
 
     }
 
@@ -175,8 +202,10 @@ object Minhash extends{
       tokens.appendChild(renderTokens(box1.value, box2.value))
       minhashBox.innerHTML = ""
       minhashBox.appendChild(renderMinhashes(box1.value, box2.value))
+      bandBox.innerHTML = ""
+      bandBox.appendChild(renderBands())
     }
-
+//
     mhNum.onchange = (e: dom.Event) => {
       bandNum.innerHTML = ""
       for {i <- renderBandOptions()} yield bandNum.appendChild(i)
@@ -227,7 +256,8 @@ object Minhash extends{
               minhashBox
             ),
             div(`class` := "col-sm",
-              h4("Bands")
+              h4("Bands"),
+              bandBox
             )
           )
         )
