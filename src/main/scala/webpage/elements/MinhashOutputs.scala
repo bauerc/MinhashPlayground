@@ -2,7 +2,6 @@ package webpage.elements
 
 import org.scalajs.dom.html
 import org.scalajs.dom.html.{Div, Paragraph}
-import scalatags.JsDom
 import scalatags.JsDom.all._
 import webpage.ProcessInputs
 
@@ -30,7 +29,7 @@ object MinhashOutputs {
     )
   ).render
 
-  val similarityBox = div(cls := "container",
+  val similarityBox: Div = div(cls := "container",
     dl(cls := "row",
       dt(cls := "col-sm-4", p("Jaccard Similarity: ")),
       dd(cls := "col-sm-8", jaccardOutput),
@@ -45,9 +44,6 @@ object MinhashOutputs {
     hr(style := "width:40%"),
     outputBoxes
   ).render
-
-
-
 
   def update(processInputs: ProcessInputs): Unit = {
     jaccardOutput.innerHTML = ""
