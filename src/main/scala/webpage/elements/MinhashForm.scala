@@ -2,6 +2,7 @@ package webpage.elements
 
 import org.scalajs.dom
 import org.scalajs.dom.html
+import org.scalajs.dom.html.{Form, Input, Select}
 import scalatags.JsDom.all._
 
 import scala.math.sqrt
@@ -9,20 +10,20 @@ import scala.math.sqrt
 object MinhashForm {
 
   //Create HTML elements to use
-  val inputBox1 = input(
+  val inputBoxA: Input = input(
     cls := "form-control",
     tpe :="text",
     placeholder:="Enter first string!"
   ).render
 
 
-  val inputBox2 = input(
+  val inputboxB: Input = input(
     cls := "form-control",
     tpe :="text",
     placeholder:="Enter second string!"
   ).render
 
-  val mhNum = input(
+  val mhNum: Input = input(
     tpe := "number",
     cls := "form-control",
     value := "5",
@@ -30,23 +31,23 @@ object MinhashForm {
     max := "200"
   ).render
 
-  val bandNum = select(
+  val bandNum: Select = select(
     cls := "form-control",
     option(value := "1", "1"),
     option(value := "5", "5")
   ).render
 
-  val tokenizer = select(
+  val tokenizer: Select = select(
     cls := "form-control",
     option(value := "word","Word"),
     option(value := "shingle","Shingle")
   ).render
 
-  val HTML =  form(
+  val HTML: Form =  form(
     div(cls := "container",
       div(cls := "row",
-        div(cls := "col-sm", inputBox1),
-        div(cls := "col-sm", inputBox2)
+        div(cls := "col-sm", inputBoxA),
+        div(cls := "col-sm", inputboxB)
       ),
       div(cls := "row",
         div(cls := "col-sm", p("Choose your tokenizer")),
@@ -76,12 +77,15 @@ object MinhashForm {
     bandNum.innerHTML = ""
     for {i <- renderBandOptions()} yield bandNum.appendChild(i)
   }
-  def getValues(): MinhashForm = {
-    MinhashForm(inputBox1.value, inputBox2.value, tokenizer.value, mhNum.value.toInt, bandNum.value.toInt)
+  def getValues: MinhashForm = {
+    MinhashForm(inputBoxA.value.toLowerCase, inputboxB.value.toLowerCase, tokenizer.value, mhNum.value.toInt, bandNum.value.toInt)
   }
 
+  def checkValidity: Boolean = {
+    HTML.checkValidity()
+  }
 
 
 }
 
-case class MinhashForm(inputValue1: String, inputValue2: String, tokenizer: String, numMinhashes: Int, numBands: Int)
+case class MinhashForm(inputValueA: String, inputValueB: String, tokenizer: String, numMinhashes: Int, numBands: Int)

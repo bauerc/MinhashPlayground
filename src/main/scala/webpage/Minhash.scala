@@ -3,6 +3,7 @@ import org.scalajs.dom
 import org.scalajs.dom.html
 import scalatags.JsDom.all._
 import webpage.elements.MinhashForm
+import webpage.elements.MinhashOutputs
 
 import scala.scalajs.js.annotation.JSExport
 import scala.util.hashing.MurmurHash3
@@ -186,14 +187,6 @@ object Minhash extends{
       ).render
     }
 
-    def renderBandOptions(): List[html.Option] = {
-      val i = mhNum.value.toInt
-      val j = sqrt(i).ceil.toInt
-      val l = for (n <- 1 until j if i%n == 0) yield { List(n, i/n) }
-      val divisors = l.toList.flatten.distinct.sorted
-      divisors.map(d => option(value := d.toString, d.toString).render)
-    }
-
     def renderBands(): html.Div = {
       val b = bandNum.value.toInt
       val h = mhNum.value.toInt
@@ -237,24 +230,19 @@ object Minhash extends{
 
     // Actions
     submit.onclick = (e: dom.Event) => {
-      require(minhashForm.checkValidity())
-      val mhForm = MinhashForm.getValues()
-      jaccardOutput.innerHTML = ""
-      jaccardOutput.appendChild(p(jaccard(mhForm.inputValue1, mhForm.inputValue2)).render)
-      tokens.innerHTML = ""
-      tokens.appendChild(renderTokens(mhForm.inputValue1, mhForm.inputValue2))
-      minhashBox.innerHTML = ""
-      minhashBox.appendChild(renderMinhashes(mhForm.inputValue1, mhForm.inputValue2))
-      bandBox.innerHTML = ""
-      bandBox.appendChild(renderBands())
+//      require(minhashForm.checkValidity())
+      val mhForm = MinhashForm.getValues
+      val processInputs = ProcessInputs(mhForm)
+      MinhashOutputs.update(processInputs)
+//      jaccardOutput.innerHTML = ""
+//      jaccardOutput.appendChild(p(jaccard(mhForm.inputValueA, mhForm.inputValueB)).render)
+//      tokens.innerHTML = ""
+//      tokens.appendChild(renderTokens(mhForm.inputValueA, mhForm.inputValueB))
+//      minhashBox.innerHTML = ""
+//      minhashBox.appendChild(renderMinhashes(mhForm.inputValueA, mhForm.inputValueB))
+//      bandBox.innerHTML = ""
+//      bandBox.appendChild(renderBands())
     }
-//    mhNum.onchange = (e: dom.Event) => {
-//      require(mhNum.checkValidity())
-//      bandNum.innerHTML = ""
-//      for {i <- renderBandOptions()} yield bandNum.appendChild(i)
-//    }
-
-
 
 
     //Render target
@@ -269,10 +257,11 @@ object Minhash extends{
         MinhashForm.HTML,
         submit,
 //        minhashForm,
-        hr(style := "width:40%"),
-        similarityBox,
-        hr(style := "width:40%"),
-        outputBoxes
+//        hr(style := "width:40%"),
+//        similarityBox,
+//        hr(style := "width:40%"),
+//        outputBoxes
+        MinhashOutputs.HTML
       ).render
 
     )
