@@ -12,17 +12,20 @@ object Minhash extends{
   @JSExport
   def main(target: html.Div) ={
 
+    //Limit seeds ot something sensible
     val seeds = 1 to 200 toList
 
     //Create HTML elements to use
-    val box1 = input(
-      `type`:="text",
+    val inputBox1 = input(
+      cls := "form-control",
+      tpe :="text",
       placeholder:="Enter first string!"
     ).render
 
 
-    val box2 = input(
-      `type`:="text",
+    val inputBox2 = input(
+      cls := "form-control",
+      tpe :="text",
       placeholder:="Enter second string!"
     ).render
 
@@ -41,27 +44,72 @@ object Minhash extends{
     ).render
 
     val tokenizer = select(
-      `class` := "form-control",
+      cls := "form-control",
       option(value := "word","Word"),
       option(value := "shingle","Shingle")
     ).render
 
     val normalizer = select(
-      `class` := "form-control",
+      cls := "form-control",
       multiple,
       option(value := "lowercase","Lower Case"),
       option(value := "rmpunct","Remove Punctuation")
     ).render
 
-    val output = p("").render
+    val jaccardOutput = p("").render
 
     val tokens = div().render
 
-    val submit = button(cls := "btn btn-primary", tpe := "submit", "Submit").render
+    val submit = button(cls := "btn btn-primary", tpe := "button", "Submit").render
 
     val minhashBox = div().render
 
     val bandBox = div().render
+
+    val minhashForm =  form(
+      div(cls := "container",
+        div(cls := "row",
+          div(cls := "col-sm", inputBox1),
+          div(cls := "col-sm", inputBox2)
+        ),
+        div(cls := "row",
+          div(cls := "col-sm", p("Choose your tokenizer")),
+          div(cls := "col-sm", tokenizer)
+        ),
+        div(cls := "row",
+          div(cls := "col-sm", p("Choose your number of Minhashes (1-200)")),
+          div(cls := "col-sm", mhNum)
+        ),
+        div(cls := "row",
+          div(cls := "col-sm", p("Choose your number of Bands")),
+          div(cls := "col-sm", bandNum)
+        )
+      ),
+      div(submit)
+    ).render
+
+    val outputBoxes = div(cls := "container",
+      div(cls := "row",
+        div(cls := "col-sm",
+          style := "padding-right:20px; border-right: 1px solid #ccc;",
+          h4("Minhashes"),
+          minhashBox
+        ),
+        div(cls := "col-sm",
+          h4("Bands"),
+          bandBox
+        )
+      )
+    ).render
+
+    val similarityBox = div(cls := "container",
+      dl(cls := "row",
+        dt(cls := "col-sm-4", p("Jaccard Similarity: ")),
+        dd(cls := "col-sm-8", jaccardOutput),
+        dt(cls := "col-sm-4", p("Tokens (First 20): ")),
+        dd(cls := "col-sm-8", tokens)
+      )
+    )
 
     //Functions to change the page
     def getTokenizer(): String => Set[String] = {
@@ -91,14 +139,14 @@ object Minhash extends{
           t <- union.toList.take(20)
         } yield {
           if (intersection.contains(t)) li(
-            `class` :="list-inline-item list-group-item-success",
+            cls :="list-inline-item list-group-item-success",
             t
           ) else li(
-            `class` := "list-inline-item",
+            cls := "list-inline-item",
             t
           )
         },
-        `class` := "list-inline"
+        cls := "list-inline"
       ).render
     }
 
@@ -117,26 +165,26 @@ object Minhash extends{
       val lim = mhNum.value.toInt
       val minhashes = generateMinhashes(s1,s2)
       val numTrue = minhashes.count(_._3)
-      div(`class` := "container",
+      div(cls := "container",
         fontSize := "12px",
         if (numTrue > 0) h6("Its a 'match'!") else h6("Its not a 'match'!"),
         p("There were " + numTrue + " matching minhashes out of " + lim),
-        dl(`class` := "row",
-          dt(`class` := "col-sm-4", p("Minhash Collision Rate: ")),
-          dd(`class` := "col-sm-8", (numTrue * 1.0)/lim)
+        dl(cls := "row",
+          dt(cls := "col-sm-4", p("Minhash Collision Rate: ")),
+          dd(cls := "col-sm-8", (numTrue * 1.0)/lim)
         ),
         for {
           m <- minhashes
         } yield {
           if (m._3) {
-            div(`class` := "row",
-              div(`class` := "col-sm bg-success text-white", m._1),
-              div(`class` := "col-sm bg-success text-white", m._2)
+            div(cls := "row",
+              div(cls := "col-sm bg-success text-white", m._1),
+              div(cls := "col-sm bg-success text-white", m._2)
             )
           } else {
-            div(`class` := "row",
-              div(`class` := "col-sm", m._1),
-              div(`class` := "col-sm", m._2)
+            div(cls := "row",
+              div(cls := "col-sm", m._1),
+              div(cls := "col-sm", m._2)
             )
           }
 
@@ -156,33 +204,33 @@ object Minhash extends{
     def renderBands(): html.Div = {
       val b = bandNum.value.toInt
       val h = mhNum.value.toInt
-      val minhashes = generateMinhashes(box1.value, box2.value)
+      val minhashes = generateMinhashes(inputBox1.value, inputBox2.value)
       val minA = minhashes.map(_._1)
       val minB = minhashes.map(_._2)
       val bandsA = minA.grouped(h/b).map(x => MurmurHash3.seqHash(x))
       val bandsB = minB.grouped(h/b).map(x => MurmurHash3.seqHash(x))
       val bands = bandsA.zip(bandsB).toList
       val numTrue = bands.count(x => x._1 == x._2)
-      div(`class` := "container",
+      div(cls := "container",
         fontSize := "12px",
         if (numTrue > 0) h6("Its a 'match'!") else h6("Its not a 'match'!"),
         p("There were " + numTrue + " matching bands out of " + b),
-        dl(`class` := "row",
-          dt(`class` := "col-sm-4", p("Band Collision Rate: ")),
-          dd(`class` := "col-sm-8", (numTrue * 1.0)/b)
+        dl(cls := "row",
+          dt(cls := "col-sm-4", p("Band Collision Rate: ")),
+          dd(cls := "col-sm-8", (numTrue * 1.0)/b)
         ),
         for {
           x <- bands
         } yield {
           if (x._1 == x._2) {
-            div(`class` := "row",
-              div(`class` := "col-sm bg-success text-white", x._1),
-              div(`class` := "col-sm bg-success text-white", x._2)
+            div(cls := "row",
+              div(cls := "col-sm bg-success text-white", x._1),
+              div(cls := "col-sm bg-success text-white", x._2)
             )
           } else {
-            div(`class` := "row",
-              div(`class` := "col-sm", x._1),
-              div(`class` := "col-sm", x._2)
+            div(cls := "row",
+              div(cls := "col-sm", x._1),
+              div(cls := "col-sm", x._2)
             )
           }
         }
@@ -196,17 +244,19 @@ object Minhash extends{
 
     // Actions
     submit.onclick = (e: dom.Event) => {
-      output.innerHTML = ""
-      output.appendChild(p(jaccard(box1.value, box2.value)).render)
+      require(minhashForm.checkValidity())
+      jaccardOutput.innerHTML = ""
+      jaccardOutput.appendChild(p(jaccard(inputBox1.value, inputBox2.value)).render)
       tokens.innerHTML = ""
-      tokens.appendChild(renderTokens(box1.value, box2.value))
+      tokens.appendChild(renderTokens(inputBox1.value, inputBox2.value))
       minhashBox.innerHTML = ""
-      minhashBox.appendChild(renderMinhashes(box1.value, box2.value))
+      minhashBox.appendChild(renderMinhashes(inputBox1.value, inputBox2.value))
       bandBox.innerHTML = ""
       bandBox.appendChild(renderBands())
     }
-//
+    //
     mhNum.onchange = (e: dom.Event) => {
+      require(mhNum.checkValidity())
       bandNum.innerHTML = ""
       for {i <- renderBandOptions()} yield bandNum.appendChild(i)
     }
@@ -217,50 +267,17 @@ object Minhash extends{
     //Render target
     target.appendChild(
       div(
-        `class` :=   "text-center",
-        h1(`class` := "display-1", "Minhash"),
-        p(`class` := "lead",
+        cls :=   "text-center",
+        h1(cls := "display-1", "Minhash"),
+        p(cls := "lead",
           "Type here to fiddle with Minhash " +
             "between two strings!"
         ),
-        form(
-          table(tbody(tr(td(box1), td(box2))), margin := "auto"), //TODO change to div
-          div(`class` := "container",
-            div(`class` := "row",
-              div(`class` := "col-sm", p("Choose your tokenizer")),
-              div(`class` := "col-sm", tokenizer)
-            ),
-              div(`class` := "row",
-              div(`class` := "col-sm", p("Choose your number of Minhashes (1-200)")),
-              div(`class` := "col-sm", mhNum)
-            ),
-            div(`class` := "row",
-              div(`class` := "col-sm", p("Choose your number of Bands")),
-              div(`class` := "col-sm", bandNum)
-            )
-          ),
-          div(submit)
-        ),
-        div(`class` := "container",
-          dl(`class` := "row",
-            dt(`class` := "col-sm-4", p("Jaccard Similarity: ")),
-            dd(`class` := "col-sm-8", output),
-            dt(`class` := "col-sm-4", p("Tokens (First 20): ")),
-            dd(`class` := "col-sm-8", tokens)
-          )
-        ),
-        div(`class` := "container",
-          div(`class` := "row",
-            div(`class` := "col-sm",
-              h4("Minhashes"),
-              minhashBox
-            ),
-            div(`class` := "col-sm",
-              h4("Bands"),
-              bandBox
-            )
-          )
-        )
+        minhashForm,
+        hr(style := "width:40%"),
+        similarityBox,
+        hr(style := "width:40%"),
+        outputBoxes
       ).render
 
     )
