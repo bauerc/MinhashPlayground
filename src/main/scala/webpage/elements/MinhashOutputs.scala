@@ -97,7 +97,6 @@ object MinhashOutputs {
             div(cls := "col-sm", m._2)
           )
         }
-
       }
     ).render
   }
@@ -107,7 +106,7 @@ object MinhashOutputs {
     div(cls := "container",
       fontSize := "12px",
       if (numTrue > 0) h6("Its a 'match'!") else h6("Its not a 'match'!"),
-      p("There were " + numTrue + " matching bands out of " + b),
+      p("There were " + numTrue + " matching bands out of " + bands.size),
       dl(cls := "row",
         dt(cls := "col-sm-4", p("Band Collision Rate: ")),
         dd(cls := "col-sm-8", (numTrue * 1.0)/bands.size)
