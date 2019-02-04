@@ -1,42 +1,63 @@
 package webpage
-import org.scalajs.dom
-import org.scalajs.dom.html
-import scalatags.JsDom.all._
-import webpage.elements.MinhashForm
-import webpage.elements.MinhashOutputs
 
-import scala.scalajs.js.annotation.JSExport
+import webpage.elements.Form
 
-@JSExport
-object Minhash extends{
-  @JSExport
-  def main(target: html.Div) ={
+import scala.util.hashing.MurmurHash3
 
-    // Create elements
-    val submit = button(cls := "btn btn-primary", tpe := "button", "Submit").render
+case class Minhash(
+                     tokens: Set[(String, Boolean)],
+                     jaccard: Double,
+                     minhashes: List[(Int, Int, Boolean)],
+                     bands: List[(Int, Int, Boolean)]
+                   )
 
-    // Actions
-    submit.onclick = (e: dom.Event) => {
-      require(MinhashForm.checkValidity)
-      val processInputs = ProcessInputs(MinhashForm.getValues)
-      MinhashOutputs.update(processInputs)
 
+object Minhash {
+  def apply(mhForm: Form): Minhash = {
+    def minhash(tokens: Set[String], seed: Int): Int = {
+      tokens.map(x => MurmurHash3.stringHash(x, seed)).min
     }
 
-    //Render target
-    target.appendChild(
-      div(
-        cls :=   "text-center",
-        h1(cls := "display-1", "Minhash"),
-        p(cls := "lead",
-          "Type here to fiddle with Minhash " +
-            "between two strings!"
-        ),
-        MinhashForm.HTML,
-        submit,
-        MinhashOutputs.HTML
-      ).render
-    )
+    def generateMinhashes(tokensA: Set[String], tokensB: Set[String]): List[(Int, Int, Boolean)] = {
+      for {
+        s <- 1 to mhForm.numMinhashes toList
+      } yield {
+        val m1 =minhash(tokensA, s)
+        val m2 =minhash(tokensB, s)
+        (m1, m2, m1 == m2)
+      }
+    }
 
+    def band(minhashes: List[Int]): List[Int] = {
+      minhashes.grouped(mhForm.numMinhashes/mhForm.numBands).map(x => MurmurHash3.seqHash(x)).toList
+    }
+
+    def generateBands(minhashes: List[(Int,Int,Boolean)]): List[(Int,Int,Boolean)] = {
+      val bandA = band(minhashes.map(_._1))
+      val bandB = band(minhashes.map(_._2))
+      bandA.zip(bandB).map(x => (x._1, x._2, x._1 == x._2))
+    }
+
+    val tokenizer = {
+      mhForm.tokenizer match {
+        case "word" => (s: String) => {
+          s.split(" ").toSet
+        }
+        case "shingle" => (s: String) => {
+          s.sliding(3).toSet
+        }
+      }
+    }
+    val tokensA: Set[String] = tokenizer(mhForm.inputValueA)
+    val tokensB: Set[String] = tokenizer(mhForm.inputValueB)
+    val intersection = tokensA.intersect(tokensB)
+    val tokens = tokensA.union(tokensB).map(x => (x, intersection.contains(x)))
+    val jaccard: Double = tokens.count(_._2) * 1.0 / tokens.size
+    val minhashes = generateMinhashes(tokensA,tokensB)
+    val bands = generateBands(minhashes)
+    new Minhash(tokens, jaccard, minhashes, bands)
   }
+
+
+
 }

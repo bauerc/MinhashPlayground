@@ -2,12 +2,12 @@ package webpage.elements
 
 import org.scalajs.dom
 import org.scalajs.dom.html
-import org.scalajs.dom.html.{Form, Input, Select}
+import org.scalajs.dom.html.{Input, Select}
 import scalatags.JsDom.all._
 
 import scala.math.sqrt
 
-object MinhashForm {
+object Form {
 
   //Create HTML elements to use
   val inputBoxA: Input = input(
@@ -43,7 +43,7 @@ object MinhashForm {
     option(value := "shingle","Shingle")
   ).render
 
-  val HTML: Form =  form(
+  val HTML: html.Form =  form(
     div(cls := "container",
       div(cls := "row",
         div(cls := "col-sm", inputBoxA),
@@ -77,8 +77,8 @@ object MinhashForm {
     bandNum.innerHTML = ""
     for {i <- renderBandOptions()} yield bandNum.appendChild(i)
   }
-  def getValues: MinhashForm = {
-    MinhashForm(inputBoxA.value.toLowerCase, inputboxB.value.toLowerCase, tokenizer.value, mhNum.value.toInt, bandNum.value.toInt)
+  def getValues: Form = {
+    Form(inputBoxA.value.toLowerCase, inputboxB.value.toLowerCase, tokenizer.value, mhNum.value.toInt, bandNum.value.toInt)
   }
 
   def checkValidity: Boolean = {
@@ -88,4 +88,4 @@ object MinhashForm {
 
 }
 
-case class MinhashForm(inputValueA: String, inputValueB: String, tokenizer: String, numMinhashes: Int, numBands: Int)
+case class Form(inputValueA: String, inputValueB: String, tokenizer: String, numMinhashes: Int, numBands: Int)

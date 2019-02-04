@@ -3,9 +3,9 @@ package webpage.elements
 import org.scalajs.dom.html
 import org.scalajs.dom.html.{Div, Paragraph}
 import scalatags.JsDom.all._
-import webpage.ProcessInputs
+import webpage.Minhash
 
-object MinhashOutputs {
+object Outputs {
 
   val minhashBox: Div = div().render
 
@@ -45,7 +45,7 @@ object MinhashOutputs {
     outputBoxes
   ).render
 
-  def update(processInputs: ProcessInputs): Unit = {
+  def update(processInputs: Minhash): Unit = {
     jaccardOutput.innerHTML = ""
     jaccardOutput.appendChild(p(processInputs.jaccard).render)
     tokens.innerHTML = ""
